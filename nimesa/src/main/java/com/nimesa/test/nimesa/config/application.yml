@@ -1,0 +1,23 @@
+aws:
+  accessKeyId: AKIAX5XSI5UT4M674AFL
+  secretAccessKey: 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
+  region: ap-south-1
+
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${PSQL_URI:jdbc:postgresql://127.0.0.1:5432/BBXGC-3017}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    hikari:
+      connection-test-query: "Select 1"
+      pool-name: finopsreportscronjob_pool
+      minimum-idle: ${MINIMUM_IDLE:1}
+      maximum-pool-size: ${MAXIMUM_POOL_SIZE:10}
+  jpa:
+    database: postgresql
+    show-sql: true
+    generate-ddl: false
+    hibernate:
+      naming:
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
