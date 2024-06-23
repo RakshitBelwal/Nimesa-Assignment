@@ -1,36 +1,55 @@
 package com.nimesa.test.nimesa.service;
 
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
 import com.nimesa.test.nimesa.model.Job;
 import com.nimesa.test.nimesa.model.ServiceResult;
 import com.nimesa.test.nimesa.repository.ServiceResultRepository;
 import com.nimesa.test.nimesa.repository.JobRepository;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AWSCloudService {
-    @Autowired
-    private JobRepository jobRepository;
 
-    @Autowired
-    private ServiceResultRepository serviceResultRepository;
+    private final AmazonEC2 amazonEC2;
+
+    private final AmazonS3 amazonS3;
+
+    private final ServiceResultRepository serviceResultRepository;
+
+    private final JobRepository jobRepository;
 
     @Async
+    @Transactional
     public CompletableFuture<Void> discoverEC2Instances(Long jobId) {
-        // Simulate EC2 discovery
-        List<String> instanceIds = List.of("i-1234567890abcdef0", "i-abcdef1234567890");
+        DescribeInstancesRequest request = new DescribeInstancesRequest();
+        DescribeInstancesResult result = amazonEC2.describeInstances(request);
+
+        List<String> instanceIds = result.getReservations().stream()
+                .flatMap(reservation -> reservation.getInstances().stream())
+                .map(Instance::getInstanceId)
+                .collect(Collectors.toList());
 
         instanceIds.forEach(instanceId -> {
-            ServiceResult result = new ServiceResult();
-            result.setJobId(jobId);
-            result.setService("EC2");
-            result.setResult(instanceId);
-            serviceResultRepository.save(result);
+            ServiceResult serviceResult = new ServiceResult();
+            serviceResult.setJobId(jobId);
+            serviceResult.setService("EC2");
+            serviceResult.setResult(instanceId);
+            serviceResultRepository.save(serviceResult);
         });
 
         updateJobStatus(jobId, "Success");
@@ -38,15 +57,15 @@ public class AWSCloudService {
     }
 
     @Async
+    @Transactional
     public CompletableFuture<Void> discoverS3Buckets(Long jobId) {
-        // Simulate S3 discovery
-        List<String> bucketNames = List.of("bucket1", "bucket2");
+        List<Bucket> buckets = amazonS3.listBuckets();
 
-        bucketNames.forEach(bucketName -> {
+        buckets.forEach(bucket -> {
             ServiceResult result = new ServiceResult();
             result.setJobId(jobId);
             result.setService("S3");
-            result.setResult(bucketName);
+            result.setResult(bucket.getName());
             serviceResultRepository.save(result);
         });
 
@@ -79,7 +98,7 @@ public class AWSCloudService {
     }
 
     public List<String> getS3BucketObjects(String bucketName) {
-        return serviceResultRepository.findByServiceAndPattern("S3", bucketName)
+        return serviceResultRepository.findByJobId(1L)
                 .stream()
                 .map(ServiceResult::getResult)
                 .collect(Collectors.toList());

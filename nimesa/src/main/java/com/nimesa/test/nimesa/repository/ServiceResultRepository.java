@@ -1,13 +1,11 @@
 package com.nimesa.test.nimesa.repository;
 
 import com.nimesa.test.nimesa.model.ServiceResult;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
 
-@Repository
-public interface ServiceResultRepository extends JpaRepository<ServiceResult, Long> {
+public interface ServiceResultRepository extends CrudRepository<ServiceResult, Long> {
     List<ServiceResult> findByService(String serviceName);
-    List<ServiceResult> findByServiceAndPattern(String serviceName, String pattern);
+    List<ServiceResult> findByJobId(Long id);
 }

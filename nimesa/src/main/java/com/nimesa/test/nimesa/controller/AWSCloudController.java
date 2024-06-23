@@ -1,7 +1,7 @@
 package com.nimesa.test.nimesa.controller;
 
-import com.nimesa.test.nimesa.model.ServiceResult;
 import com.nimesa.test.nimesa.repository.JobRepository;
+import com.nimesa.test.nimesa.repository.ServiceResultRepository;
 import com.nimesa.test.nimesa.service.AWSCloudService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,10 @@ public class AWSCloudController {
     @Autowired
     private JobRepository jobRepository;
 
-    @PostMapping("/services")
+    @Autowired
+    private ServiceResultRepository serviceResultRepository;
+
+    @PostMapping("/discover-services")
     public Long discoverServices(@RequestBody List<String> services) {
         Long jobId = awsCloudService.createJob();
 
@@ -50,10 +53,10 @@ public class AWSCloudController {
     }
 
     @GetMapping("/s3/like")
-    public List<String> getS3BucketObjectLike(@RequestParam String bucketName, @RequestParam String pattern) {
+    public List<String> getS3BucketObjectLike(@RequestParam String bucketName) {
         return awsCloudService.getS3BucketObjects(bucketName)
                 .stream()
-                .filter(name -> name.contains(pattern))
+                .filter(name -> name.contains(bucketName))
                 .collect(Collectors.toList());
     }
 }
