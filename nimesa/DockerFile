@@ -1,0 +1,12 @@
+FROM openjdk:17-jdk-alpine
+
+WORKDIR /nimesa
+
+COPY target/nimesa-0.0.1-SNAPSHOT.jar nimesa.jar
+
+RUN mvn clean package verify
+RUN mvn clean install
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "nimesa.jar"]
